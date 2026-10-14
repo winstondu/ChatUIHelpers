@@ -1,0 +1,15 @@
+{
+  "originHash" : "688fdaadaa02ec93dbebf988da3a44237d4416e12b17c52dbbdcfb8cd3b8fa4f",
+  "pins" : [
+    {
+      "identity" : "uifoundationhelpers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/winstondu/UIFoundationHelpers.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "bd6c7f660c79e9a7235e9d1e769c24fe9ae17e65"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -15,7 +15,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../UIFoundationHelpers"),
+        .package(url: "https://github.com/winstondu/UIFoundationHelpers.git", branch: "main"),
     ],
     targets: [
         .target(

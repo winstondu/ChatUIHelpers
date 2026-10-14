@@ -145,8 +145,23 @@ public struct ChatContextMenu: View, Equatable {
         static let slideOffset: CGFloat = 12          // How far items slide up
         static let itemDuration: Double = 0.1        // Each item's fade/slide duration
         static let containerDuration: Double = 0.02   // Container height animation duration
-        static let staggerInterval: Double = 0.005     // 30ms between items for reverse unfurl
+        static let staggerInterval: Double = 0.005     // 5ms between items for reverse unfurl
         static let fadeDuration: Double = 0.05        // Duration for instant fade dismiss
+    }
+
+    /// Time from the start of a reverse unfurl until the last (bottom) item has disappeared.
+    private static func itemsOutDuration(itemCount: Int) -> Double {
+        Double(max(itemCount - 1, 0)) * UnfurlAnimation.staggerInterval + UnfurlAnimation.itemDuration
+    }
+
+    /// Total time the dismiss animation takes, from collapsing until the menu is fully transparent.
+    static func dismissDuration(itemCount: Int, style: ChatContextMenuDismissStyle) -> Double {
+        switch style {
+        case .fade:
+            return UnfurlAnimation.fadeDuration
+        case .reverseUnfurl:
+            return itemsOutDuration(itemCount: itemCount) + UnfurlAnimation.containerDuration
+        }
     }
 
     /// Total vertical padding (top + bottom)
@@ -213,7 +228,7 @@ public struct ChatContextMenu: View, Equatable {
             case .reverseUnfurl:
                 // Top items first
                 return .easeOut(duration: UnfurlAnimation.itemDuration)
-
+                    .delay(disappearDelay(for: index))
             }
         }
     }
@@ -234,6 +249,7 @@ public struct ChatContextMenu: View, Equatable {
                 return .easeOut(duration: UnfurlAnimation.fadeDuration)
             case .reverseUnfurl:
                 return .easeOut(duration: UnfurlAnimation.itemDuration)
+                    .delay(disappearDelay(for: index))
             }
         }
     }
@@ -247,7 +263,9 @@ public struct ChatContextMenu: View, Equatable {
             case .fade:
                 return .easeOut(duration: UnfurlAnimation.fadeDuration)
             case .reverseUnfurl:
+                // Collapse only once the last item is gone, so no item is clipped mid-fade
                 return .easeOut(duration: UnfurlAnimation.containerDuration)
+                    .delay(Self.itemsOutDuration(itemCount: items.count))
             }
         }
     }
@@ -320,17 +338,11 @@ public struct ChatContextMenu: View, Equatable {
         return isExpanded ? 1 : collapsedHeight / expandedHeight
     }
 
-    /// Fade the complete menu during a fade dismissal so the collapsed
-    /// container cannot remain visible after its rows have disappeared.
+    /// Fade the complete menu while dismissing so the collapsed container
+    /// cannot remain visible after its rows have disappeared. It follows
+    /// `containerAnimation`, so a reverse unfurl fades as it collapses.
     private var menuOpacity: Double {
-        guard !isExpanded else { return 1 }
-
-        switch dismissStyle {
-        case .fade:
-            return 0
-        case .reverseUnfurl:
-            return 1
-        }
+        isExpanded ? 1 : 0
     }
 
     public var body: some View {
@@ -438,32 +450,19 @@ private struct ContextMenuHostOverlay: View {
     var style: ChatContextMenuStyle
 
     @State private var isExpanded: Bool = false
+    /// Whether the menu is on screen. It outlives `isPresented` while the
+    /// dismiss animation plays, however the menu was dismissed.
+    @State private var isShowing: Bool = false
+    @State private var removal: Task<Void, Never>?
 
     private var isPresented: Bool {
         guard let value = anchorValue else { return false }
         return presentation.isPresented(id: value.id)
     }
 
-    /// Calculate how long to wait before removing the view after dismiss animation starts
-    private var dismissDuration: Int {
-        guard let value = anchorValue else { return 150 }
-        switch dismissStyle {
-        case .fade:
-            return 50 // Match ChatContextMenu.UnfurlAnimation.fadeDuration
-        case .reverseUnfurl:
-            // Items animate out with stagger, then container shrinks
-            let itemCount = value.items.count
-            let staggerTime = Double(itemCount - 1) * 0.01 // staggerInterval
-            let itemDuration = 0.1
-            let containerDuration = 0.2
-            let totalTime = staggerTime + itemDuration + containerDuration
-            return Int(totalTime * 1000)
-        }
-    }
-
     var body: some View {
         GeometryReader { proxy in
-            if let value = anchorValue, isPresented {
+            if let value = anchorValue, isShowing {
                 let rect = proxy[value.anchor]
 
                 // Scrim for tap-outside-to-dismiss
@@ -471,7 +470,7 @@ private struct ContextMenuHostOverlay: View {
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        dismissMenu()
+                        presentation.dismiss()
                     }
                     .allowsHitTesting(isExpanded)
 
@@ -480,7 +479,7 @@ private struct ContextMenuHostOverlay: View {
                 ChatContextMenu(
                     items: value.items,
                     onDismiss: {
-                        dismissMenu()
+                        presentation.dismiss()
                     },
                     isExpanded: $isExpanded,
                     dismissStyle: dismissStyle,
@@ -492,31 +491,50 @@ private struct ContextMenuHostOverlay: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .allowsHitTesting(isExpanded)
                 .onAppear {
+                    // Render collapsed first so the unfurl animates
                     DispatchQueue.main.async {
                         isExpanded = true
                     }
                 }
             }
         }
-        .onChange(of: isPresented) { _, newValue in
-            // When the menu is dismissed by toggling presentation state
-            // (e.g. tapping the plus button again), we won't go through
-            // `dismissMenu()`. Reset `isExpanded` here so that the next
-            // presentation always starts from the collapsed state and
-            // the unfurl animation can run.
-            if !newValue {
-                isExpanded = false
+        // Every dismissal (an item, the scrim, or toggling the presentation
+        // from outside, e.g. tapping the plus button again) arrives here, so
+        // they all play the same dismiss animation before removal.
+        .onChange(of: isPresented, initial: true) { _, presented in
+            if presented {
+                show()
+            } else {
+                collapse()
             }
         }
     }
 
-    private func dismissMenu() {
-        withAnimation {
-            isExpanded = false
+    private func show() {
+        removal?.cancel()
+        removal = nil
+        if isShowing {
+            // Presented again mid-dismissal: unfurl from where it is
+            isExpanded = true
+        } else {
+            // A new menu unfurls from `onAppear`
+            isShowing = true
         }
-        Task {
-            try? await Task.sleep(for: .milliseconds(dismissDuration))
-            presentation.dismiss()
+    }
+
+    private func collapse() {
+        guard isShowing else { return }
+        isExpanded = false
+        let duration = ChatContextMenu.dismissDuration(
+            itemCount: anchorValue?.items.count ?? 0,
+            style: dismissStyle
+        )
+        removal?.cancel()
+        removal = Task {
+            // One extra frame so removal lands after the final, fully transparent frame
+            try? await Task.sleep(for: .seconds(duration + 1.0 / 60))
+            guard !Task.isCancelled else { return }
+            isShowing = false
         }
     }
 }

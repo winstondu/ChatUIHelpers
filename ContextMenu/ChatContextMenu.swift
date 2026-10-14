@@ -320,6 +320,19 @@ public struct ChatContextMenu: View, Equatable {
         return isExpanded ? 1 : collapsedHeight / expandedHeight
     }
 
+    /// Fade the complete menu during a fade dismissal so the collapsed
+    /// container cannot remain visible after its rows have disappeared.
+    private var menuOpacity: Double {
+        guard !isExpanded else { return 1 }
+
+        switch dismissStyle {
+        case .fade:
+            return 0
+        case .reverseUnfurl:
+            return 1
+        }
+    }
+
     public var body: some View {
         // Fixed outer frame provides stable bottom anchor
         ZStack(alignment: .bottom) {
@@ -348,6 +361,8 @@ public struct ChatContextMenu: View, Equatable {
                 .animation(containerAnimation, value: isExpanded)
         }
         .frame(height: fullHeight + verticalPadding)
+        .opacity(menuOpacity)
+        .animation(containerAnimation, value: isExpanded)
     }
 }
 
@@ -434,7 +449,7 @@ private struct ContextMenuHostOverlay: View {
         guard let value = anchorValue else { return 150 }
         switch dismissStyle {
         case .fade:
-            return 150 // 0.15s fade
+            return 50 // Match ChatContextMenu.UnfurlAnimation.fadeDuration
         case .reverseUnfurl:
             // Items animate out with stagger, then container shrinks
             let itemCount = value.items.count

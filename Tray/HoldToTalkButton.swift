@@ -8,6 +8,7 @@
 import SwiftUI
 import AVFoundation
 import Observation
+import WinstonUIFoundation
 
 public struct HoldToTalkButton<Recording: VoiceRecording>: View {
     let voiceRecording: Recording

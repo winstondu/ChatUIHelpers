@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 /// Observable state for context menu presentation.
 /// Use this to coordinate between anchor views and the host that renders the menu.
@@ -49,7 +50,7 @@ public struct ChatContextMenuStyle: Sendable {
     public var shadowY: CGFloat
 
     public init(
-        background: Color = .secondary,
+        background: Color = Color(uiColor: .secondarySystemBackground),
         border: Color = Color.gray.opacity(0.25),
         divider: Color = Color.gray.opacity(0.25),
         iconTint: Color = .secondary,

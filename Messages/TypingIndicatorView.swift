@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 public struct TypingIndicatorView: View {
     public enum Style {

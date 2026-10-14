@@ -1,4 +1,5 @@
 import SwiftUI
+import WinstonUIFoundation
 
 public struct CTAMessageStyle: Sendable {
     public var bodyFont: Font

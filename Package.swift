@@ -14,9 +14,15 @@ let package = Package(
             targets: ["ChatUIHelpers"]
         ),
     ],
+    dependencies: [
+        .package(path: "../UIFoundationHelpers"),
+    ],
     targets: [
         .target(
             name: "ChatUIHelpers",
+            dependencies: [
+                .product(name: "WinstonUIFoundation", package: "uifoundationhelpers"),
+            ],
             path: "."
         ),
     ]

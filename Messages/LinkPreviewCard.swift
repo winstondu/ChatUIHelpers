@@ -1,37 +1,5 @@
 import SwiftUI
-#if canImport(UIKit)
 import UIKit
-public typealias LinkPreviewImage = UIImage
-#else
-import AppKit
-public typealias LinkPreviewImage = NSImage
-#endif
-
-public enum LinkPreviewPlatformDefaults {
-    public static var background: Color {
-#if canImport(UIKit)
-        Color(uiColor: .secondarySystemBackground)
-#else
-        Color(nsColor: .windowBackgroundColor)
-#endif
-    }
-
-    public static var border: Color {
-#if canImport(UIKit)
-        Color(uiColor: .separator)
-#else
-        Color(nsColor: .separatorColor)
-#endif
-    }
-
-    public static var domain: Color {
-#if canImport(UIKit)
-        Color(uiColor: .tertiaryLabel)
-#else
-        Color(nsColor: .tertiaryLabelColor)
-#endif
-    }
-}
 
 public struct LinkPreviewCardStyle: Sendable {
     public let cardWidth: CGFloat
@@ -48,14 +16,14 @@ public struct LinkPreviewCardStyle: Sendable {
     public init(
         cardWidth: CGFloat = 280,
         cornerRadius: CGFloat = 16,
-        background: Color = LinkPreviewPlatformDefaults.background,
-        borderColor: Color = LinkPreviewPlatformDefaults.border,
+        background: Color = Color(.secondarySystemBackground),
+        borderColor: Color = Color(.separator),
         titleFont: Font = .system(size: 15, weight: .bold),
         titleColor: Color = .primary,
         descriptionFont: Font = .system(size: 13),
         descriptionColor: Color = .secondary,
         domainFont: Font = .system(size: 12),
-        domainColor: Color = LinkPreviewPlatformDefaults.domain
+        domainColor: Color = Color(.tertiaryLabel)
     ) {
         self.cardWidth = cardWidth
         self.cornerRadius = cornerRadius
@@ -76,7 +44,7 @@ public struct LinkPreviewCard: View {
     let title: String?
     let description: String?
     let domain: String
-    let image: LinkPreviewImage?
+    let image: UIImage?
     let style: LinkPreviewCardStyle
     let onTap: () -> Void
 
@@ -84,7 +52,7 @@ public struct LinkPreviewCard: View {
         title: String?,
         description: String?,
         domain: String,
-        image: LinkPreviewImage?,
+        image: UIImage?,
         style: LinkPreviewCardStyle = .default,
         onTap: @escaping () -> Void
     ) {
@@ -100,19 +68,11 @@ public struct LinkPreviewCard: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
                 if let image {
-#if canImport(UIKit)
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
                         .frame(width: style.cardWidth, height: style.cardWidth * 9 / 16)
                         .clipped()
-#else
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: style.cardWidth, height: style.cardWidth * 9 / 16)
-                        .clipped()
-#endif
                 }
 
                 VStack(alignment: .leading, spacing: 4) {

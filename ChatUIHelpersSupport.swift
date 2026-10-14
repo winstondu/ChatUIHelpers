@@ -15,21 +15,6 @@ public struct BounceButtonStyle: ButtonStyle {
     }
 }
 
-public extension View {
-    /// Applies the system glass button treatment on iOS 26 and a lightweight
-    /// tinted shape fallback on earlier supported iOS versions.
-    @ViewBuilder
-    func applyGlassEffectForButton<S: Shape>(shape: S, tint: Color = .clear) -> some View {
-        if #available(iOS 26, macOS 26, *) {
-            self.glassEffect(.regular.interactive(true).tint(tint), in: shape)
-        } else {
-            self.background {
-                shape.fill(tint == .clear ? .white.opacity(0.25) : tint)
-            }
-        }
-    }
-}
-
 public extension Color {
     init(hex: UInt, alpha: Double = 1) {
         self.init(

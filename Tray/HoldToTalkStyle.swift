@@ -17,7 +17,7 @@ public struct HoldToTalkStyle: Sendable {
         recordingDurationFont: Font = .system(size: 15, weight: .medium),
         previewDurationFont: Font = .system(size: 12),
         foreground: Color = .primary,
-        background: Color = .secondary,
+        background: Color = Color(.secondarySystemBackground),
         sendButtonBackground: Color = .primary,
         sendButtonForeground: Color = .white,
         trashIcon: Image = Image(systemName: "trash")

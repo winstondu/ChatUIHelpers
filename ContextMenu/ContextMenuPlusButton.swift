@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 public struct ContextMenuPlusButton: View {
     let presentation: ContextMenuPresentation

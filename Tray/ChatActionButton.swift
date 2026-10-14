@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 public struct ChatActionButton: View {
     let icon: Image

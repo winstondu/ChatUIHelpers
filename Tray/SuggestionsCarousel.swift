@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 public struct SuggestionPillStyle: Sendable {
     public var font: Font

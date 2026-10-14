@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 public struct ChatMessageInput<LeadingButton: View, TrailingButton: View>: View {
     @Binding var text: String

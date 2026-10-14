@@ -1,8 +1,5 @@
 import SwiftUI
 import AVFoundation
-#if !canImport(UIKit)
-import AVKit
-#endif
 
 public struct ChatVideoPlayerView: View {
     let url: URL
@@ -32,7 +29,6 @@ public struct ChatVideoPlayerView: View {
     }
 
     public var body: some View {
-#if canImport(UIKit)
         ZStack {
             VideoPlayerLayer(player: player)
 
@@ -47,13 +43,6 @@ public struct ChatVideoPlayerView: View {
         .onTapGesture { handleTap() }
         .onAppear { setupPlayer() }
         .onDisappear { cleanupPlayer() }
-#else
-        VideoPlayer(player: player)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-            .padding(.horizontal, 12)
-            .onAppear { setupPlayer() }
-            .onDisappear { cleanupPlayer() }
-#endif
     }
 
     private var controlsOverlay: some View {
@@ -217,7 +206,6 @@ public struct ChatVideoPlayerView: View {
     }
 }
 
-#if canImport(UIKit)
 private struct VideoPlayerLayer: UIViewRepresentable {
     let player: AVPlayer?
 
@@ -249,4 +237,3 @@ private final class VideoPlayerUIView: UIView {
         playerLayer.videoGravity = .resizeAspect
     }
 }
-#endif

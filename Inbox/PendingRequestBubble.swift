@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import WinstonUIFoundation
 
 /// Pill-shaped bubble showing "Pending request" status
 public struct PendingRequestBubble: View {
